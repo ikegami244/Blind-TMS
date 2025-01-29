@@ -1,5 +1,5 @@
-% clear all
-% close all
+clear all
+close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load Data
@@ -7,20 +7,17 @@
 load('data/PeakTime.mat')
 
 % - PT includes the peak time data of both feet of both blocks
-%   for 14 stimulation trials(sites) and no-stimulation trial for each of all the 28 participants.
+%   for 14 stimulation trials(sites) and no-stimulation trial for each of all the 36 participants.
 % - The order of the participants' data is consistent with the participant # shown in Table 1
 
 % - PT(SubID).L{site,blk} :left foot data
 %            .R{site,blk} :right foot data
-%    SubID: participants' ID (1-28)
+%    SubID: participants' ID (1-36)
 %    site:  1-14: stimulation site, 15: no stimulation
 %    blk: 1: first block, 2: second block  
 
-% - Missing Data: no data for the 1st block of stimulation site #14 for participant #23
-%   (i.e., PT(23).L{14,1} == NaN; PT(23).R{14,1} == NaN)
+% - Exclusion or missing data (see Methods in the text) are set to NaN 
 
-% - Excluded Data: we excluded the right foot data in the 2nd block of stimulation site # 5 for participant #20 (see PT)
-%   (i.e., PT(20).R{5,2} == NaN)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Subject Info
@@ -28,8 +25,8 @@ load('data/PeakTime.mat')
 global BlindSubID SightedSubID ConBLDSubID ABLDSubID NABLDSubID
 
 BlindSubID   = 1:12;
-SightedSubID = 13:24;
-ConBLDSubID  = 25:28;
+ConBLDSubID  = 13:24;
+SightedSubID = 25:36;
 
 ABLDSubID    = 1:6;
 NABLDSubID   = 7:12;
@@ -37,7 +34,7 @@ NABLDSubID   = 7:12;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-subnum   = 28; % number of participants
+subnum   = 36; % number of participants
 blknum   = 2;  % number of blocks
 sitenum  = 15; % number of stimulation sites (15: no stimulation trial)
 
@@ -49,152 +46,181 @@ for SubID = 1:subnum % participant
     CycleDurR = [];
     SDL = [];
     SDR = [];
-    
+
     for blk = 1:blknum % block
-        
         for site = 1:sitenum % stimulation site
             CycleDurL{site,blk} = diff(PT(SubID).L{site,blk})/240; %unit-->sec
-            CycleDurR{site,blk} = diff(PT(SubID).R{site,blk})/240; 
-            
-            SDL(site,blk) = std(CycleDurL{site,blk}); 
-            SDR(site,blk) = std(CycleDurR{site,blk});   
-            
+            CycleDurR{site,blk} = diff(PT(SubID).R{site,blk})/240;
+
+            SDL(site,blk) = std(CycleDurL{site,blk});
+            SDR(site,blk) = std(CycleDurR{site,blk});
+
         end
     end
     SD(:,SubID) = nanmean([SDL,SDR],2);
+
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draw Figure 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-DrawBarGraph(SD,'11');
+DrawFig(SD,'11');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draw Supplementary Figure S1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-DrawBarGraph(SD,'all');
+DrawFig(SD,'all');
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Draw Supplementary Figure S2
+% FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-DrawCBLdata(SD,'11');
+function FIG = DrawFig(SD,site)
 
+global BlindSubID SightedSubID ABLDSubID NABLDSubID ConBLDSubID
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function FIG = DrawBarGraph(SD,site)
-
-global BlindSubID SightedSubID ABLDSubID NABLDSubID
-
+% (1) Comparison of SDs between stim and no-stim conditions
 
 if strcmp(site, '11')
-    FIG = figure('Name',['Fig.2: SD for pV1/V2'],'NumberTitle','off');
+    FIG = figure('Name','Fig.2: SD for pV1/V2','NumberTitle','off');
     Data_BL = SD(11,BlindSubID)';
-    Data_SI  = SD(11,SightedSubID)';
+    Data_CBL = SD(11,ConBLDSubID)';
+    Data_SI  = SD(11,SightedSubID)';    
     stimsite = 'pV1/V2';
     
 elseif strcmp(site, 'all')
-    FIG = figure('Name',['Fig.S1: SD for all sites'],'NumberTitle','off');
-    Data_BL = mean(SD(1:14,BlindSubID),1)';
-    Data_SI  = mean(SD(1:14,SightedSubID),1)';
+    FIG = figure('Name','Fig.S1: SD for all sites','NumberTitle','off');
+    Data_BL = nanmean(SD(1:14,BlindSubID),1)';
+    Data_CBL = nanmean(SD(1:14,ConBLDSubID),1)';
+    Data_SI  = nanmean(SD(1:14,SightedSubID),1)';
     stimsite = 'all sites';
     
 end
 
-ms1 = 2;
-offset1 = [-0.15 0.15] + 0.03;
+ms1 = 4;
+offset1 = [-0.15 0.15] ;
 offset2 = [-0.15 0.15];
-ymax = 0.25; 
+ymax = 0.35; 
 
 
-for gr = 1:2 % group
+for gr = 1:3 % group
     switch gr
         case 1
-            DataName = 'Blind';
+            DataName = 'AcqBlind';
             xpos1 = 1 ;
             xpos  = xpos1;
             col = [0 0 1];
             Data = [SD(15,BlindSubID)',Data_BL];
             
         case 2
-            DataName = 'Sighted';
-            xpos2 = 1.8 ;
+            DataName = 'ConBlind';
+            xpos2 = 2 ;
             xpos  = xpos2;
+            col = [0 1 0];
+            Data = [SD(15,ConBLDSubID)',Data_CBL];
+        
+        case 3
+            DataName = 'Sighted';
+            xpos3 = 3 ;
+            xpos  = xpos3;
             col = [1 0 0];
             Data = [SD(15,SightedSubID)',Data_SI];
     end
-    
+
+    subplot(2,1,1)
     hold on;
-    b1 = bar(xpos,mean(Data,1));
-    set(b1,'EdgeColor',col,'FaceColor',col,'FaceAlpha',0.5,'BarWidth',0.5, 'LineWidth',1,'LineStyle','none')
-    
+
     if gr == 1
-        plot(xpos+offset1,Data(ABLDSubID,:)','color',col,'LineStyle','-','linewidth',0.5);
-        plot(xpos+offset1,Data(NABLDSubID,:)','color',col,'LineStyle','--','linewidth',0.5);
+        hold on
+        plot(xpos+offset1,Data(ABLDSubID,:)','color',col,'LineStyle','--','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
+        plot(xpos+offset1,Data(NABLDSubID,:)','color',col,'LineStyle','-','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
     else
-        plot(xpos+offset1,Data','color',col,'LineStyle','-','linewidth',0.5);
+        plot(xpos+offset1,Data','color',col,'LineStyle','-','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
     end
 
-    tx = text(xpos,ymax-3/240,DataName);
+    tx = text(xpos,ymax+10/240,DataName);
     set(tx,'FontSize',10,'FontName','Arial','HorizontalAlignment','center',...
         'fontweight','bold','color',col,'FontSize',15);
 end
 
-axis([xpos1-0.5 xpos2+0.5 0 ymax]);
-set(gca, 'XTick', [xpos1+offset2,xpos2+offset2])
-set(gca, 'YTick', [0:0.05:0.25])
-
-set(gca, 'XTickLabel',{'no stim',stimsite,'no stim',stimsite});
+axis([xpos1-0.5 xpos3+0.5 0 ymax]);
+set(gca, 'XTick', [xpos1+offset2,xpos2+offset2,xpos3+offset2])
+set(gca, 'YTick', 0:0.05:0.30)
+set(gca, 'XTickLabel',{'no stim',stimsite,'no stim',stimsite,'no stim',stimsite});
 ylabel('SD of the cycle duraion (sec)','FontSize',10)
 
-end
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function FIG = DrawCBLdata(SD,site)
-
-global ConBLDSubID
-
+%  Delta SD
 if strcmp(site, '11')
-    FIG = figure('Name',['Fig.3: SD for pV1/V2'],'NumberTitle','off');
-    Data_CBL = SD(11,ConBLDSubID)';
+    Data_BL = SD(11,BlindSubID)'-SD(15,BlindSubID)';
+    Data_CBL = SD(11,ConBLDSubID)'-SD(15,ConBLDSubID)';
+    Data_SI  = SD(11,SightedSubID)'-SD(15,SightedSubID)';    
     stimsite = 'pV1/V2';
-    
+    ymin = -0.1; 
+
 elseif strcmp(site, 'all')
-    FIG = figure('Name',['Fig.S2: SD for all sites'],'NumberTitle','off');
-    Data_CBL = mean(SD(1:14,ConBLDSubID),1)';
+    Data_BL = nanmean(SD(1:14,BlindSubID),1)'-SD(15,BlindSubID)';
+    Data_CBL = nanmean(SD(1:14,ConBLDSubID),1)'-SD(15,ConBLDSubID)';
+    Data_SI  = nanmean(SD(1:14,SightedSubID),1)'-SD(15,SightedSubID)';
     stimsite = 'all sites';
+    ymin = -0.125;    
+end
+
+ymax = 0.07; 
+
+for gr = 1:3 % group
+    switch gr
+        case 1
+            DataName = 'AcqBlind';
+            xpos1 = 1 ;
+            xpos  = xpos1;
+            col = [0 0 1];
+            Data = Data_BL;
+            
+        case 2
+            DataName = 'ConBlind';
+            xpos2 = 1.5 ;
+            xpos  = xpos2;
+            col = [0 1 0];
+            Data = Data_CBL;
+        
+        case 3
+            DataName = 'Sighted';
+            xpos3 = 2 ;
+            xpos  = xpos3;
+            col = [1 0 0];
+            Data = Data_SI;
+    end
+
+    subplot(2,1,2)
+    hold on;
+
+    L1 = line([0 3],[0 0]);
+    set(L1,'color',[1 1 1]*0.3,'LineStyle','--','linewidth',0.5)
     
+    if gr == 1
+        hold on
+        plot(xpos+(0.5-rand(1,6))*0.05+0.1,Data(ABLDSubID,:)','color',col,'LineStyle','none','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor','none','MarkerSize',ms1);
+        plot(xpos+(0.5-rand(1,6))*0.05+0.1,Data(NABLDSubID,:)','color',col,'LineStyle','none','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor',col,'MarkerSize',ms1);
+    else
+        plot(xpos+(0.5-rand(1,length(Data)))*0.05+0.1,Data','color',col,'LineStyle','none','linewidth',0.5,...
+            'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor',col,'MarkerSize',ms1);
+    end
+        boxplot(Data',xpos,'position',xpos,'Symbol','','Widths',0.1,...
+            'Whisker',10,'color',col); 
 end
 
-ms1 = 8;
-offset1 = [-0.15 0.15] + 0.03;
-offset2 = [-0.15 0.15];
-ymax = 0.25;
-
-DataName = 'ConBlind';
-xpos1 = 1 ;
-col = [0 1 0];
-Data = [SD(15,ConBLDSubID)',Data_CBL];
-
-hold on;
-synb = {'o','p','s','v'};
-
-for sub = 1:length(Data_CBL)
-    hold on
-    h1 = plot(xpos1+offset1,Data(sub,:)');
-    set(h1,'marker',synb{sub}, 'markersize',ms1,'MarkerFaceColor',col,'MarkerEdgeColor','k','Color',col,'linewidth',0.5)
-end
-
-axis([xpos1-0.3 xpos1+0.3 0 ymax]);
-set(gca, 'XTick', [offset1+xpos1])
-set(gca, 'YTick', [0:0.05:0.25])
-set(gca, 'XTickLabel',{'no stim',stimsite});
-ylabel('SD of the cycle duraion (sec)','FontSize',10)
-lgd = legend({'participant #25','participant #26','participant #27','participant #28'});
-lgd.NumColumns = 2;
-lgd.Location = 'north';
+axis([xpos1-0.25 xpos3+0.25 ymin ymax]);
+set(gca, 'XTick', [xpos1,xpos2,xpos3]);
+set(gca, 'YTick', ymin:0.025:ymax);
+set(gca, 'XTickLabel',[]);
+ylabel('ΔSD of the cycle duraion (sec)','FontSize',10);
 
 end
-
-
