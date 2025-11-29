@@ -21,8 +21,8 @@ Data = Data - ReferenceLine;
 
 Bi = zeros(1,length(Data));
 Bi(Data > 0) = 1 ;
-T_e = find(diff(Bi) ==  1); % an extention point
-T_f = find(diff(Bi) == -1); %  a flexion point
+T_e = find(diff(Bi) ==  1); % extention points
+T_f = find(diff(Bi) == -1); % flexion points
 T_f = T_f(T_f > T_e(1));    % remove points before the first extention point
 
 n_i =  min(length(T_e),length(T_f));

@@ -77,101 +77,29 @@ DrawFig(SD,'all');
 % FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function FIG = DrawFig(SD,site)
-
 global BlindSubID SightedSubID ABLDSubID NABLDSubID ConBLDSubID
-
-% (1) Comparison of SDs between stim and no-stim conditions
-
-if strcmp(site, '11')
-    FIG = figure('Name','Fig.2: SD for pV1/V2','NumberTitle','off');
-    Data_BL = SD(11,BlindSubID)';
-    Data_CBL = SD(11,ConBLDSubID)';
-    Data_SI  = SD(11,SightedSubID)';    
-    stimsite = 'pV1/V2';
-    
-elseif strcmp(site, 'all')
-    FIG = figure('Name','Fig.S1: SD for all sites','NumberTitle','off');
-    Data_BL = nanmean(SD(1:14,BlindSubID),1)';
-    Data_CBL = nanmean(SD(1:14,ConBLDSubID),1)';
-    Data_SI  = nanmean(SD(1:14,SightedSubID),1)';
-    stimsite = 'all sites';
-    
-end
-
-ms1 = 4;
-offset1 = [-0.15 0.15] ;
-offset2 = [-0.15 0.15];
-ymax = 0.35; 
-
-
-for gr = 1:3 % group
-    switch gr
-        case 1
-            DataName = 'AcqBlind';
-            xpos1 = 1 ;
-            xpos  = xpos1;
-            col = [0 0 1];
-            Data = [SD(15,BlindSubID)',Data_BL];
-            
-        case 2
-            DataName = 'ConBlind';
-            xpos2 = 2 ;
-            xpos  = xpos2;
-            col = [0 1 0];
-            Data = [SD(15,ConBLDSubID)',Data_CBL];
-        
-        case 3
-            DataName = 'Sighted';
-            xpos3 = 3 ;
-            xpos  = xpos3;
-            col = [1 0 0];
-            Data = [SD(15,SightedSubID)',Data_SI];
-    end
-
-    subplot(2,1,1)
-    hold on;
-
-    if gr == 1
-        hold on
-        plot(xpos+offset1,Data(ABLDSubID,:)','color',col,'LineStyle','--','linewidth',0.5,...
-            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
-        plot(xpos+offset1,Data(NABLDSubID,:)','color',col,'LineStyle','-','linewidth',0.5,...
-            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
-    else
-        plot(xpos+offset1,Data','color',col,'LineStyle','-','linewidth',0.5,...
-            'Marker','o','MarkerEdgeColor','none','MarkerFaceColor',col,'MarkerSize',ms1);
-    end
-
-    tx = text(xpos,ymax+10/240,DataName);
-    set(tx,'FontSize',10,'FontName','Arial','HorizontalAlignment','center',...
-        'fontweight','bold','color',col,'FontSize',15);
-end
-
-axis([xpos1-0.5 xpos3+0.5 0 ymax]);
-set(gca, 'XTick', [xpos1+offset2,xpos2+offset2,xpos3+offset2])
-set(gca, 'YTick', 0:0.05:0.30)
-set(gca, 'XTickLabel',{'no stim',stimsite,'no stim',stimsite,'no stim',stimsite});
-ylabel('SD of the cycle duraion (sec)','FontSize',10)
-
-
 
 %  Delta SD
 if strcmp(site, '11')
+    FIG = figure('Name','Fig.2A: SD for pV1/V2','NumberTitle','off');
+
     Data_BL = SD(11,BlindSubID)'-SD(15,BlindSubID)';
     Data_CBL = SD(11,ConBLDSubID)'-SD(15,ConBLDSubID)';
-    Data_SI  = SD(11,SightedSubID)'-SD(15,SightedSubID)';    
-    stimsite = 'pV1/V2';
-    ymin = -0.1; 
+    Data_SI  = SD(11,SightedSubID)'-SD(15,SightedSubID)';
+    ymin = -0.1;
 
 elseif strcmp(site, 'all')
+    FIG = figure('Name','Fig.S1: SD for all sites','NumberTitle','off');
+
     Data_BL = nanmean(SD(1:14,BlindSubID),1)'-SD(15,BlindSubID)';
     Data_CBL = nanmean(SD(1:14,ConBLDSubID),1)'-SD(15,ConBLDSubID)';
     Data_SI  = nanmean(SD(1:14,SightedSubID),1)'-SD(15,SightedSubID)';
-    stimsite = 'all sites';
-    ymin = -0.125;    
+    ymin = -0.125;
 end
 
-ymax = 0.07; 
+
+ymax = 0.07;
+ms1 = 4;
 
 for gr = 1:3 % group
     switch gr
@@ -197,8 +125,6 @@ for gr = 1:3 % group
             Data = Data_SI;
     end
 
-    subplot(2,1,2)
-    hold on;
 
     L1 = line([0 3],[0 0]);
     set(L1,'color',[1 1 1]*0.3,'LineStyle','--','linewidth',0.5)
@@ -213,8 +139,13 @@ for gr = 1:3 % group
         plot(xpos+(0.5-rand(1,length(Data)))*0.05+0.1,Data','color',col,'LineStyle','none','linewidth',0.5,...
             'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor',col,'MarkerSize',ms1);
     end
-        boxplot(Data',xpos,'position',xpos,'Symbol','','Widths',0.1,...
-            'Whisker',10,'color',col); 
+    boxplot(Data',xpos,'position',xpos,'Symbol','','Widths',0.1,...
+        'Whisker',10,'color',col);
+
+    tx = text(xpos,ymax+0.01,DataName);
+    set(tx,'FontSize',10,'FontName','Arial','HorizontalAlignment','center',...
+        'fontweight','bold','color',col,'FontSize',15);
+
 end
 
 axis([xpos1-0.25 xpos3+0.25 ymin ymax]);

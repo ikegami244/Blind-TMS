@@ -75,38 +75,39 @@ global ABLDSubID NABLDSubID
 FIG = figure('Name',['SD for neck stimulation'],'NumberTitle','off');
 Data_NON = nanmean(SD(1:2:20,:),1)';
 Data_STM = nanmean(SD(2:2:20,:),1)';
+
 stimsite = 'neck';
+DataName = 'Acquired Blind';
 
-ms1 = 2;
-offset1 = [-0.15 0.15];
-ymax = 0.25;
-
-
-DataName = 'Blind';
-xpos1 = 1 ;
-xpos2 = 2 ;
-xpos  = offset1+xpos1 ;
+ms1 = 4;
+ymin = -0.03;
+ymax = 0.02;
+xpos = 1 ;
 col = [0 0 1];
-Data = [Data_NON , Data_STM];
+
+Data = Data_STM-Data_NON;
 
 hold on;
-b1 = bar(xpos,nanmean(Data,1));
-set(b1,'EdgeColor',col,'FaceColor',col,'FaceAlpha',0.5,'BarWidth',0.5, 'LineWidth',1,'LineStyle','none')
+L1 = line([0 2],[0 0]);
+set(L1,'color',[1 1 1]*0.3,'LineStyle','--','linewidth',0.5)
+Data(ABLDSubID,:)
+plot(xpos+(0.5-rand(1,numel(ABLDSubID)))*0.05+0.1,Data(ABLDSubID,:)','color',col,'LineStyle','none','linewidth',0.5,...
+    'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor','none','MarkerSize',ms1);
+plot(xpos+(0.5-rand(1,numel(NABLDSubID)))*0.05+0.1,Data(NABLDSubID,:)','color',col,'LineStyle','none','linewidth',0.5,...
+    'Marker','o','MarkerEdgeColor',col,'MarkerFaceColor',col,'MarkerSize',ms1);
 
-plot(xpos,Data(ABLDSubID,:)','color',col,'LineStyle','-','linewidth',0.5);
-plot(xpos,Data(NABLDSubID,:)','color',col,'LineStyle','--','linewidth',0.5);
+boxplot(Data',xpos,'position',xpos,'Symbol','','Widths',0.1,...
+    'Whisker',10,'color',col);
 
-tx = text(mean(xpos),ymax-0.04,DataName);
+axis([xpos-0.25 xpos+0.25 ymin ymax]);
+set(gca, 'XTick', xpos)
+set(gca, 'YTick', ymin:0.01:ymax)
+set(gca, 'XTickLabel',[]);
+ylabel('ΔSD of the cycle duraion (sec)','FontSize',10)
+
+tx = text(xpos,ymax+0.002,DataName);
 set(tx,'FontSize',10,'FontName','Arial','HorizontalAlignment','center',...
     'fontweight','bold','color',col,'FontSize',15);
- 
-axis([xpos1-0.5 xpos1+0.5 0 ymax]);
-set(gca, 'XTick',xpos)
-set(gca, 'YTick', [0:0.05:0.25])
-
-set(gca, 'XTickLabel',{'no stim','neck stim'});
-ylabel('SD of the cycle duraion (sec)','FontSize',10)
-
 end
 
 
